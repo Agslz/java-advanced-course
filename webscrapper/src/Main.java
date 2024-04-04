@@ -18,19 +18,24 @@ public class Main {
         links.add("https://www.bbc.com/news/uk-61194137");
         links.add("https://www.bbc.com/news/world-us-canada-61196311");
 
-        // Procesar cada enlace y imprimir el contenido
+       /* // Procesar cada enlace y imprimir el contenido
         links.stream().parallel().forEach(link -> {
             String content = getWebContent(link);
             System.out.println(content);
-        });
+        });*/
 
         // Imprimir el contenido de la última URL
         String link = "https://www.bbc.com/";
         String result = getWebContent(link);
-        System.out.println(result);
+        //System.out.println(result);
+
     }
 
-    private static String getWebContent(String link) {
+    private synchronized static String getWebContent(String link) {
+
+        System.out.println("INIT");
+        System.out.println(link);
+
         try {
             URL url = new URL(link);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -39,6 +44,8 @@ public class Main {
             InputStream input = conn.getInputStream();
 
             Stream<String> lines = new BufferedReader(new InputStreamReader(input)).lines();
+
+            System.out.println("END");
 
             return lines.collect(Collectors.joining());
 
