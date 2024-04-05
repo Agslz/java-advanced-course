@@ -8,7 +8,7 @@ public class Main {
         Fox miki = new Fox();
         Food food = new Food();
         Water water = new Water();
-// Process data
+// Processing data
         ExecutorService service = null;
         try {
             service = Executors.newScheduledThreadPool(10);
