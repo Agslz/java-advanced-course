@@ -8,5 +8,6 @@ public interface SearchRepository {
 
     List<WebPage> search(String textSearch);
 
+    void save(WebPage webPage);
 }
 

@@ -14,14 +14,20 @@ public class SearchRepositoryImpl implements SearchRepository{
     @PersistenceContext
     EntityManager entityManager;
 
-    @Transactional
     @Override
+    @Transactional
     public List<WebPage> search(String textSearch) {
         String query = "SELECT w FROM WebPage w WHERE w.description LIKE :textSearch";
         return entityManager
                 .createQuery(query)
                 .setParameter("textSearch", "%" + textSearch + "%")
                 .getResultList();
+    }
+
+    @Override
+    @Transactional
+    public void save(WebPage webPage) {
+        entityManager.merge(webPage);
     }
 
 }
