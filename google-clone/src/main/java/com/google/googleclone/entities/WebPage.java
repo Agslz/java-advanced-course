@@ -14,9 +14,9 @@ import lombok.ToString;
 @Setter
 public class WebPage {
 
-    @Column(name = "id")
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "url")
@@ -27,5 +27,11 @@ public class WebPage {
 
     @Column(name = "description")
     private String description;
+
+    public WebPage() {
+    }
+    public WebPage(String url) {
+        this.url = url;
+    }
 
 }
