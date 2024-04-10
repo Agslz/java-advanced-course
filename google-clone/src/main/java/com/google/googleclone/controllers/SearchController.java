@@ -27,8 +27,8 @@ public class SearchController {
 
     @CrossOrigin("*")
     @RequestMapping(value = "api/test", method = RequestMethod.GET)
-    public String search(){
-        return spiderService.indexWebPage();
+    public void search(){
+        spiderService.indexWebPages();
     }
 
 }

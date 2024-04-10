@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,23 +22,84 @@ public class SpiderService {
     @Autowired
     private SearchService searchService;
 
-    public String indexWebPage() {
+    public void indexWebPages() {
+        List<WebPage> linksToIndex = searchService.getLinksToIndex();
+        linksToIndex.stream().parallel().forEach(webPage -> {
+            try {
+                System.out.println("Indexing");
+                indexWebPage(webPage);
+            } catch(Exception e) {
+                System.out.println(e.getMessage());
+            }
+        });
+    }
 
-        String url = "https://www.bbc.com/";
+    private void indexWebPage(WebPage webPage) throws Exception {
+        String url = webPage.getUrl();
+        System.out.println(url);
         String content = getWebContent(url);
+        if (isBlank(content)) {
+            return;
+        }
 
-        if(isBlank(content)){ return "";}
+        indexAndSaveWebPage(webPage, content);
 
+        System.out.println("Domain: " + getDomain(url));
+        saveLinks(getDomain(url), content);
+    }
+
+    private String getDomain(String url) {
+        String[] aux = url.split("/");
+        return aux[0] + "//" + aux[2];
+    }
+
+    private void saveLinks(String domain, String content) {
+        System.out.println("Save Links");
+        List<String> links = getLinks(domain, content);
+        System.out.println("Links: " + links);
+        links.stream().filter(link -> !searchService.exist(link))
+                .map(link -> new WebPage(link))
+                .forEach(webPage -> searchService.save(webPage));
+
+    }
+
+    public List<String> getLinks(String domain, String content) {
+        List<String> links = new ArrayList<>();
+
+        String[] splitHref = content.split("href=\"");
+        List<String> listHref = Arrays.asList(splitHref);
+
+        listHref.forEach(strHref -> {
+            String[] aux = strHref.split("\"");
+            links.add(aux[0]);
+        });
+        return cleanLinks(domain, links);
+    }
+
+    private List<String> cleanLinks(String domain, List<String> links) {
+        String[] excludedExtensions = new String[]{"css","js","json","jpg","png","woff2"};
+
+        List<String> resultLinks = links.stream()
+                .filter(link -> Arrays.stream(excludedExtensions).noneMatch(link::endsWith))
+                .map(link -> link.startsWith("/") ? domain + link : link)
+                .filter(link -> link.startsWith("http"))
+                .collect(Collectors.toList());
+
+        List<String> uniqueLinks = new ArrayList<>();
+        uniqueLinks.addAll(new HashSet<>(resultLinks));
+
+        return uniqueLinks;
+    }
+
+    private void indexAndSaveWebPage(WebPage webPage, String content) {
         String title = getTitle(content);
         String description = getDescription(content);
-        WebPage webPage = new WebPage();
+
         webPage.setDescription(description);
         webPage.setTitle(title);
-        webPage.setUrl(url);
 
+        System.out.println("Save: " + webPage);
         searchService.save(webPage);
-        
-        return description;
     }
 
     public String getTitle(String content) {
@@ -48,7 +110,7 @@ public class SpiderService {
 
     public String getDescription(String content) {
         String[] aux = content.split("<meta name=\"description\" content=\"");
-        String[] aux2 = aux[1].split("\"/>");
+        String[] aux2 = aux[1].split("\">");
         return aux2[0];
     }
 
@@ -69,5 +131,4 @@ public class SpiderService {
         }
         return "";
     }
-
 }
